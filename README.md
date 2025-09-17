@@ -2,7 +2,7 @@
 
 Si quieres trabajar localmente con tu propio IDE, puedes clonar este repositorio y enviar los cambios.
 
-El único requisito es tener instalados Node.js y npm 
+El único requisito es tener instalados Node.js y npm.
 
 Sigue estos pasos:
 
