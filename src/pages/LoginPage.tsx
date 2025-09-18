@@ -1,40 +1,86 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Label } from "@/components/ui/label.tsx";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Bus, Shield } from "lucide-react";
 
+type LoginResponse = {
+    token?: string;
+    user?: { name?: string; [k: string]: unknown } | null;
+    message?: string;
+    error?: string;
+    [k: string]: unknown;
+};
+
 const LoginPage = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         username: "",
         password: "",
-        remember: false
+        remember: false,
     });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError(null);
+        setLoading(true);
+
         try {
-            const response = await fetch("/api/login", {
+            const base = (import.meta as any).env?.VITE_API_URL ?? "";
+            const url = `${base?.toString().replace(/\/$/, "")}/api/login`;
+
+            const res = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                // Descomenta si el backend usa cookies/sesiones:
+                // credentials: "include",
+                body: JSON.stringify({
+                    username: formData.username,
+                    password: formData.password,
+                }),
             });
-            if (response.ok) {
-                // Aquí puedes manejar el éxito (redirección, mensaje, etc.)
-                console.log("Login exitoso");
-            } else {
-                // Aquí puedes manejar el error
-                console.error("Error en el login");
+
+            if (!res.ok) {
+                let msg: string | undefined;
+                try {
+                    const data = (await res.json()) as LoginResponse;
+                    msg = data.message || data.error;
+                } catch {
+                    // sin cuerpo JSON
+                }
+                setError(msg || "Credenciales inválidas.");
+                return;
             }
-        } catch (error) {
-            console.error("Error en la petición:", error);
+
+            const data = (await res.json().catch(() => ({}))) as LoginResponse;
+            const payload = {
+                token: data.token ?? "",
+                user: data.user?.name ?? formData.username,
+                ts: Date.now(),
+            };
+
+            if (formData.remember) {
+                localStorage.setItem("auth", JSON.stringify(payload));
+            } else {
+                sessionStorage.setItem("auth", JSON.stringify(payload));
+            }
+
+            navigate("/alertas", { replace: true });
+        } catch (err) {
+            setError("No se pudo conectar con el servidor.");
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
 
     const handleInputChange = (field: string, value: string | boolean) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
     return (
@@ -61,9 +107,7 @@ const LoginPage = () => {
                         </div>
 
                         <div className="grid grid-cols-1 gap-4 text-center">
-                            <h2 className="text-4xl font-extrabold text-white">
-                                Sistema Inteligente
-                            </h2>
+                            <h2 className="text-4xl font-extrabold text-white">Sistema Inteligente</h2>
                             <p className="text-2xl text-white/90 leading-relaxed">
                                 de Monitoreo Satelital
                                 <br />
@@ -73,30 +117,13 @@ const LoginPage = () => {
                             </p>
                         </div>
                     </div>
-
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0">
-                    <svg
-                        viewBox="0 0 1200 300"
-                        className="w-full h-auto text-login-wave"
-                        preserveAspectRatio="none"
-                    >
-                        <path
-                            d="M0,100 C300,200 600,0 900,100 C1050,150 1150,50 1200,100 L1200,300 L0,300 Z"
-                            fill="currentColor"
-                            opacity="0.8"
-                        />
-                        <path
-                            d="M0,150 C300,250 600,50 900,150 C1050,200 1150,100 1200,150 L1200,300 L0,300 Z"
-                            fill="currentColor"
-                            opacity="0.6"
-                        />
-                        <path
-                            d="M0,200 C300,300 600,100 900,200 C1050,250 1150,150 1200,200 L1200,300 L0,300 Z"
-                            fill="currentColor"
-                            opacity="0.4"
-                        />
+                    <svg viewBox="0 0 1200 300" className="w-full h-auto text-login-wave" preserveAspectRatio="none">
+                        <path d="M0,100 C300,200 600,0 900,100 C1050,150 1150,50 1200,100 L1200,300 L0,300 Z" fill="currentColor" opacity="0.8" />
+                        <path d="M0,150 C300,250 600,50 900,150 C1050,200 1150,100 1200,150 L1200,300 L0,300 Z" fill="currentColor" opacity="0.6" />
+                        <path d="M0,200 C300,300 600,100 900,200 C1050,250 1150,150 1200,200 L1200,300 L0,300 Z" fill="currentColor" opacity="0.4" />
                     </svg>
                 </div>
             </div>
@@ -121,12 +148,8 @@ const LoginPage = () => {
                 <Card className="w-full max-w-md border-0 shadow-none">
                     <CardHeader className="space-y-4 pb-8">
                         <div className="text-center lg:text-left">
-                            <CardTitle className="text-3xl font-bold text-gray-900 mb-2">
-                                Inicio de Sesión Operadores
-                            </CardTitle>
-                            <p className="text-gray-600">
-                                Bienvenido, por favor ingresa tus credenciales de operador
-                            </p>
+                            <CardTitle className="text-3xl font-bold text-gray-900 mb-2">Inicio de Sesión Operadores</CardTitle>
+                            <p className="text-gray-600">Bienvenido, por favor ingresa tus credenciales de operador</p>
                         </div>
                     </CardHeader>
 
@@ -170,10 +193,7 @@ const LoginPage = () => {
                                         onCheckedChange={(checked) => handleInputChange("remember", checked as boolean)}
                                         className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
                                     />
-                                    <Label
-                                        htmlFor="remember"
-                                        className="text-sm text-gray-600 cursor-pointer"
-                                    >
+                                    <Label htmlFor="remember" className="text-sm text-gray-600 cursor-pointer">
                                         Recordarme
                                     </Label>
                                 </div>
@@ -186,11 +206,14 @@ const LoginPage = () => {
                                 </button>
                             </div>
 
+                            {error && <p className="text-sm text-red-600">{error}</p>}
+
                             <Button
                                 type="submit"
-                                className="w-full h-12 text-base font-semibold bg-login-button hover:bg-login-button/90 text-white border-0 rounded-lg transition-all duration-200 hover:shadow-lg"
+                                disabled={loading}
+                                className="w-full h-12 text-base font-semibold bg-login-button hover:bg-login-button/90 text-white border-0 rounded-lg transition-all duration-200 hover:shadow-lg disabled:opacity-70"
                             >
-                                Ingresar
+                                {loading ? "Ingresando..." : "Ingresar"}
                             </Button>
                         </form>
 
