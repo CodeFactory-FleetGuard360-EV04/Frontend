@@ -1,3 +1,4 @@
+// file: 'src/pages/LoginPage.tsx'
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button.tsx";
@@ -25,19 +26,18 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setError(null);
         setLoading(true);
 
         try {
-            const base = (import.meta as any).env?.VITE_API_URL ?? "";
-            const url = `${base?.toString().replace(/\/$/, "")}/api/login`;
+            const base = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
+            const url = `${base}/api/login`;
 
             const res = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                // Descomenta si el backend usa cookies/sesiones:
                 // credentials: "include",
                 body: JSON.stringify({
                     username: formData.username,
@@ -46,18 +46,24 @@ const LoginPage = () => {
             });
 
             if (!res.ok) {
+                const isJson = res.headers.get("content-type")?.includes("application/json");
                 let msg: string | undefined;
-                try {
+
+                if (isJson) {
                     const data = (await res.json()) as LoginResponse;
                     msg = data.message || data.error;
-                } catch {
-                    // sin cuerpo JSON
+                } else {
+                    const text = await res.text().catch(() => "");
+                    msg = text || undefined;
                 }
+
                 setError(msg || "Credenciales inválidas.");
                 return;
             }
 
-            const data = (await res.json().catch(() => ({}))) as LoginResponse;
+            const okIsJson = res.headers.get("content-type")?.includes("application/json");
+            const data: LoginResponse = okIsJson ? await res.json() : {};
+
             const payload = {
                 token: data.token ?? "",
                 user: data.user?.name ?? formData.username,
