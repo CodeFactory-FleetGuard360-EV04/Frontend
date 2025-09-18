@@ -8,7 +8,7 @@ Sigue estos pasos:
 
 ```sh
 # Paso 1: Clona el repositorio usando la URL de Git del proyecto.
-git clone <TU_URL_DE_GIT>
+git clone https://github.com/CodeFactory-FleetGuard360-EV04/Frontend.git
 
 # Paso 2: Navega al directorio del proyecto.
 cd <TU_NOMBRE_DE_PROYECTO>
