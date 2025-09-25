@@ -16,7 +16,6 @@ interface Alert {
     description: string;
     priority: "critical" | "high" | "medium";
     area: string;
-    conductor: string;
 }
 
 export default function AlertManagement() {
@@ -26,24 +25,21 @@ export default function AlertManagement() {
             name: "Alerta Velocidad",
             description: "Exceso de velocidad en ruta principal",
             priority: "critical",
-            area: "Zona Norte",
-            conductor: "Juan Pérez"
+            area: "Zona Norte"
         },
         {
             id: "2",
             name: "Mantenimiento",
             description: "Revisión programada de unidad",
             priority: "medium",
-            area: "Taller Central",
-            conductor: "María González"
+            area: "Taller Central"
         },
         {
             id: "3",
             name: "Ruta Desviada",
             description: "Desviación no autorizada de ruta",
             priority: "high",
-            area: "Zona Sur",
-            conductor: "Carlos Rodríguez"
+            area: "Zona Sur"
         }
     ]);
 
@@ -51,15 +47,14 @@ export default function AlertManagement() {
         name: "",
         description: "",
         priority: "",
-        area: "",
-        conductor: ""
+        area: ""
     });
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const { toast } = useToast();
 
     const handleAddAlert = () => {
-        if (!newAlert.name || !newAlert.description || !newAlert.priority || !newAlert.area || !newAlert.conductor) {
+        if (!newAlert.name || !newAlert.description || !newAlert.priority || !newAlert.area) {
             toast({
                 title: "Error",
                 description: "Por favor completa todos los campos",
@@ -73,12 +68,11 @@ export default function AlertManagement() {
             name: newAlert.name,
             description: newAlert.description,
             priority: newAlert.priority as "critical" | "high" | "medium",
-            area: newAlert.area,
-            conductor: newAlert.conductor
+            area: newAlert.area
         };
 
         setAlerts([...alerts, alert]);
-        setNewAlert({ name: "", description: "", priority: "", area: "", conductor: "" });
+        setNewAlert({ name: "", description: "", priority: "", area: "" });
         setIsDialogOpen(false);
 
         toast({
@@ -88,7 +82,7 @@ export default function AlertManagement() {
     };
 
     const handleDeleteAlert = (id: string) => {
-        setAlerts(alerts.filter(alert => alert.id !== id));
+        setAlerts(alerts.filter((alert) => alert.id !== id));
         toast({
             title: "Alerta eliminada",
             description: "La alerta ha sido eliminada del sistema"
@@ -97,19 +91,27 @@ export default function AlertManagement() {
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
-            case "critical": return "bg-priority-critical text-white";
-            case "high": return "bg-priority-high text-white";
-            case "medium": return "bg-priority-medium text-white";
-            default: return "bg-muted";
+            case "critical":
+                return "bg-priority-critical text-white";
+            case "high":
+                return "bg-priority-high text-white";
+            case "medium":
+                return "bg-priority-medium text-white";
+            default:
+                return "bg-muted";
         }
     };
 
     const getPriorityText = (priority: string) => {
         switch (priority) {
-            case "critical": return "Crítica";
-            case "high": return "Alta";
-            case "medium": return "Media";
-            default: return priority;
+            case "critical":
+                return "Crítica";
+            case "high":
+                return "Alta";
+            case "medium":
+                return "Media";
+            default:
+                return priority;
         }
     };
 
@@ -118,32 +120,16 @@ export default function AlertManagement() {
             {/* Sidebar */}
             <div className="fixed left-0 top-0 h-screen w-[92px] bg-[#0A2846] flex flex-col items-center pt-5 z-10">
                 <div className="flex flex-col space-y-[15px] items-center">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-white hover:bg-white/10 w-[28px] h-[28px] p-0"
-                    >
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 w-[28px] h-[28px] p-0">
                         <Map className="h-[28px] w-[28px]" />
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-white hover:bg-white/10 w-[28px] h-[28px] p-0"
-                    >
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 w-[28px] h-[28px] p-0">
                         <Bell className="h-[28px] w-[28px]" />
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-white hover:bg-white/10 w-[28px] h-[28px] p-0"
-                    >
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 w-[28px] h-[28px] p-0">
                         <BookOpen className="h-[28px] w-[28px]" />
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-white hover:bg-white/10 w-[28px] h-[28px] p-0"
-                    >
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 w-[28px] h-[28px] p-0">
                         <User className="h-[28px] w-[28px]" />
                     </Button>
                 </div>
@@ -157,10 +143,7 @@ export default function AlertManagement() {
                     </div>
                     <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <AlertDialogTrigger asChild>
-                            <Button
-                                variant="outline"
-                                className="border-2 border-muted text-muted-foreground hover:bg-muted/10"
-                            >
+                            <Button variant="outline" className="border-2 border-muted text-muted-foreground hover:bg-muted/10">
                                 <Plus className="w-4 h-4 mr-2" />
                                 ADD ITEM
                             </Button>
@@ -192,10 +175,7 @@ export default function AlertManagement() {
                                 </div>
                                 <div>
                                     <Label>Seleccionar Área Encargada</Label>
-                                    <Select
-                                        value={newAlert.area}
-                                        onValueChange={(value) => setNewAlert({ ...newAlert, area: value })}
-                                    >
+                                    <Select value={newAlert.area} onValueChange={(value) => setNewAlert({ ...newAlert, area: value })}>
                                         <SelectTrigger className="mt-2">
                                             <SelectValue placeholder="Selecciona un área" />
                                         </SelectTrigger>
@@ -208,28 +188,8 @@ export default function AlertManagement() {
                                     </Select>
                                 </div>
                                 <div>
-                                    <Label>Seleccionar Conductor</Label>
-                                    <Select
-                                        value={newAlert.conductor}
-                                        onValueChange={(value) => setNewAlert({ ...newAlert, conductor: value })}
-                                    >
-                                        <SelectTrigger className="mt-2">
-                                            <SelectValue placeholder="Selecciona un conductor" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Juan Pérez">Juan Pérez</SelectItem>
-                                            <SelectItem value="María González">María González</SelectItem>
-                                            <SelectItem value="Carlos Rodríguez">Carlos Rodríguez</SelectItem>
-                                            <SelectItem value="Ana Martínez">Ana Martínez</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
                                     <Label>Seleccionar Prioridad</Label>
-                                    <Select
-                                        value={newAlert.priority}
-                                        onValueChange={(value) => setNewAlert({ ...newAlert, priority: value })}
-                                    >
+                                    <Select value={newAlert.priority} onValueChange={(value) => setNewAlert({ ...newAlert, priority: value })}>
                                         <SelectTrigger className="mt-2">
                                             <SelectValue placeholder="Selecciona una prioridad" />
                                         </SelectTrigger>
@@ -244,11 +204,7 @@ export default function AlertManagement() {
                                     <Button onClick={handleAddAlert} className="flex-1">
                                         Agregar Alerta
                                     </Button>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setIsDialogOpen(false)}
-                                        className="flex-1"
-                                    >
+                                    <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
                                         Cancelar
                                     </Button>
                                 </div>
@@ -256,6 +212,7 @@ export default function AlertManagement() {
                         </AlertDialogContent>
                     </AlertDialog>
                 </div>
+
                 {/* Tabla de Alertas */}
                 <Card>
                     <CardContent className="p-0">
@@ -266,25 +223,18 @@ export default function AlertManagement() {
                                     <TableHead className="font-bold text-foreground">Descripción</TableHead>
                                     <TableHead className="font-bold text-foreground">Prioridad</TableHead>
                                     <TableHead className="font-bold text-foreground">Área Encargada</TableHead>
-                                    <TableHead className="font-bold text-foreground">Conductor</TableHead>
                                     <TableHead className="font-bold text-foreground">Acciones</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {alerts.map((alert, index) => (
-                                    <TableRow
-                                        key={alert.id}
-                                        className={index % 2 === 1 ? "bg-light-aqua" : "bg-white"}
-                                    >
+                                    <TableRow key={alert.id} className={index % 2 === 1 ? "bg-light-aqua" : "bg-white"}>
                                         <TableCell className="font-medium">{alert.name}</TableCell>
                                         <TableCell>{alert.description}</TableCell>
                                         <TableCell>
-                                            <Badge className={getPriorityColor(alert.priority)}>
-                                                {getPriorityText(alert.priority)}
-                                            </Badge>
+                                            <Badge className={getPriorityColor(alert.priority)}>{getPriorityText(alert.priority)}</Badge>
                                         </TableCell>
                                         <TableCell>{alert.area}</TableCell>
-                                        <TableCell>{alert.conductor}</TableCell>
                                         <TableCell>
                                             <div className="flex space-x-2">
                                                 <Button size="sm" variant="ghost" className="text-primary hover:bg-primary/10">
