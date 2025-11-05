@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import logoShield from "@/assets/logo-shield.png";
 
-const API_URL = "http://143.110.196.155";
+const API_URL = "/api";
 
 const Login = () => {
   const [credentials, setCredentials] = useState({
