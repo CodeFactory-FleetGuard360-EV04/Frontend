@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import logoShield from "@/assets/logo-shield.png";
 
+const API_URL = "http://143.110.196.155";
+
 const Login = () => {
   const [credentials, setCredentials] = useState({
     username: "",
@@ -22,36 +24,59 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulación de login
-    setTimeout(() => {
-      if (credentials.username && credentials.password) {
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: credentials.username, // el backend espera 'email'
+          password: credentials.password,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Credenciales inválidas");
+      }
+
+      const data = await response.json();
+
+      if (data?.jwt) {
+        // Guardar token en localStorage o sessionStorage
+        if (credentials.remember) {
+          localStorage.setItem("jwt_token", data.jwt);
+        } else {
+          sessionStorage.setItem("jwt_token", data.jwt);
+        }
+
         toast({
           title: "Login exitoso",
-          description: "Bienvenido al sistema de monitoreo satelital",
+          description: `Bienvenido ${data.email}`,
         });
+
         navigate("/dashboard");
       } else {
-        toast({
-          title: "Error de autenticación",
-          description: "Por favor verifica tus credenciales",
-          variant: "destructive",
-        });
+        throw new Error("Respuesta inválida del servidor");
       }
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "No se pudo iniciar sesión";
+      toast({
+        title: "Error de autenticación",
+        description: message || "No se pudo iniciar sesión",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
     <div className="min-h-screen flex">
       {/* Columna Izquierda */}
       <div className="w-2/5 bg-gradient-to-br from-dark-blue via-dark-blue to-aqua-green relative overflow-hidden">
-        {/* Patrón de ondas */}
         <div className="absolute inset-0 opacity-20">
-          <svg
-            viewBox="0 0 400 400"
-            className="w-full h-full"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg viewBox="0 0 400 400" className="w-full h-full">
             <path
               d="M0,200 Q100,150 200,200 T400,200 L400,400 L0,400 Z"
               fill="rgba(90,183,163,0.3)"
@@ -62,20 +87,12 @@ const Login = () => {
             />
           </svg>
         </div>
-        
+
         <div className="relative z-10 flex flex-col justify-center items-center h-full p-8 text-center">
-          <div className="mb-8">
-            <img 
-              src={logoShield} 
-              alt="Logo Sistema de Monitoreo" 
-              className="w-24 h-24 mx-auto mb-6"
-            />
-          </div>
-          
+          <img src={logoShield} alt="Logo Sistema de Monitoreo" className="w-24 h-24 mb-6" />
           <h1 className="text-6xl font-black text-purple-brand mb-6 leading-tight">
             BIENVENIDO<br />DE NUEVO
           </h1>
-          
           <p className="text-xl text-black font-medium max-w-md leading-relaxed">
             Sistema Inteligente de Monitoreo Satelital para Transporte de Pasajeros
           </p>
@@ -93,7 +110,7 @@ const Login = () => {
               Bienvenido, por favor ingresa tus credenciales de operador
             </p>
           </CardHeader>
-          
+
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -111,7 +128,7 @@ const Login = () => {
                   placeholder="Ingresa tu usuario o correo"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="password" className="font-medium">
                   Contraseña
@@ -127,7 +144,7 @@ const Login = () => {
                   placeholder="Ingresa tu contraseña"
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -141,15 +158,11 @@ const Login = () => {
                     Recordarme
                   </Label>
                 </div>
-                
-                <a
-                  href="#"
-                  className="text-sm text-primary hover:underline"
-                >
+                <a href="#" className="text-sm text-primary hover:underline">
                   ¿Olvidaste tu contraseña?
                 </a>
               </div>
-              
+
               <Button
                 type="submit"
                 className="w-full h-12 text-lg font-medium"
@@ -158,7 +171,7 @@ const Login = () => {
                 {isLoading ? "Ingresando..." : "Ingresar"}
               </Button>
             </form>
-            
+
             <p className="text-xs text-muted-foreground text-center mt-6">
               El acceso de operadores será registrado en el log de auditoría.
             </p>
