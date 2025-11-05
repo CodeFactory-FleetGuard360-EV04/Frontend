@@ -43,103 +43,119 @@ const Dashboard = () => {
       default: return 7;
     }
   };
+  
+const mapAreaToEncargado = (area: string): string => {
+  switch (area) {
+    case "zona-norte":
+      return "MECANICO";
+    case "zona-sur":
+      return "SEGURIDAD";
+    case "zona-centro":
+      return "OPERADOR_LOGISTICA";
+    case "taller-central":
+      return "SOPORTE_TECNICO";
+    default:
+      return "OPERADOR_LOGISTICA"; // valor por defecto válido
+  }
+};
 
-  const handleAddAlert = async () => {
-    if (!newAlert.name || !newAlert.description || !newAlert.priority || !newAlert.area) {
+const handleAddAlert = async () => {
+  if (!newAlert.name || !newAlert.description || !newAlert.priority || !newAlert.area) {
+    toast({
+      title: "Error",
+      description: "Por favor completa todos los campos",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    const token =
+      localStorage.getItem("jwt_token") || sessionStorage.getItem("jwt_token");
+
+    if (!token) {
       toast({
         title: "Error",
-        description: "Por favor completa todos los campos",
+        description: "No se encontró el token de autenticación. Inicia sesión nuevamente.",
         variant: "destructive",
       });
       return;
     }
 
-    try {
-      const token =
-        localStorage.getItem("jwt_token") || sessionStorage.getItem("jwt_token");
-
-      if (!token) {
-        toast({
-          title: "Error",
-          description: "No se encontró el token de autenticación. Inicia sesión nuevamente.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const mutation = `
-        mutation CreateTipoAlerta($input: TipoAlertaCreateInput!) {
-          createTipoAlerta(input: $input) {
+    const mutation = `
+      mutation CreateTipoAlerta($input: TipoAlertaCreateInput!) {
+        createTipoAlerta(input: $input) {
+          id
+          nombre
+          descripcion
+          nivelPrioridad {
             id
             nombre
-            descripcion
-            nivelPrioridad {
-              id
-              nombre
-            }
-            tipoEncargado
           }
+          tipoEncargado
         }
-      `;
-
-      const variables = {
-        input: {
-          nombre: newAlert.name,
-          descripcion: newAlert.description,
-          nivelPrioridadId: getPriorityId(newAlert.priority),
-          tipoEncargado: newAlert.area.toUpperCase().replace("-", "_"), // ejemplo: zona-norte → ZONA_NORTE
-        },
-      };
-
-      const response = await fetch(`${API_URL}/alerts/graphql`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ query: mutation, variables }),
-      });
-
-      const result = await response.json();
-
-      if (result.errors) {
-        throw new Error(result.errors[0]?.message || "Error al crear la alerta");
       }
+    `;
 
-      const created = result.data.createTipoAlerta;
+    const variables = {
+      input: {
+        nombre: newAlert.name,
+        descripcion: newAlert.description,
+        nivelPrioridadId: getPriorityId(newAlert.priority),
+        tipoEncargado: mapAreaToEncargado(newAlert.area),
+      },
+    };
 
-      const alert: Alert = {
-        id: created.id.toString(),
-        name: created.nombre,
-        description: created.descripcion,
-        priority:
-          created.nivelPrioridad.nombre === "Crítica"
-            ? "critical"
-            : created.nivelPrioridad.nombre === "Alta"
-            ? "high"
-            : "medium",
-        area: created.tipoEncargado,
-        conductor: "No Asignado",
-      };
+    const response = await fetch(`${API_URL}/alerts/graphql`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ query: mutation, variables }),
+    });
 
-      setAlerts((prev) => [...prev, alert]);
-      setNewAlert({ name: "", description: "", priority: "", area: "", conductor: "" });
-      setIsDialogOpen(false);
+    const result = await response.json();
 
-      toast({
-        title: "Alerta creada",
-        description: `Se ha creado la alerta "${alert.name}" exitosamente`,
-      });
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "No se pudo crear la alerta";
-      toast({
-        title: "Error al crear la alerta",
-        description: message,
-        variant: "destructive",
-      });
+    if (result.errors) {
+      throw new Error(result.errors[0]?.message || "Error al crear la alerta");
     }
-  };
+
+    const created = result.data.createTipoAlerta;
+
+    const alert: Alert = {
+      id: created.id.toString(),
+      name: created.nombre,
+      description: created.descripcion,
+      priority:
+        created.nivelPrioridad.nombre === "Crítica"
+          ? "critical"
+          : created.nivelPrioridad.nombre === "Alta"
+          ? "high"
+          : "medium",
+      area: created.tipoEncargado,
+      conductor: "No Asignado",
+    };
+
+    setAlerts((prev) => [...prev, alert]);
+    setNewAlert({ name: "", description: "", priority: "", area: "", conductor: "" });
+    setIsDialogOpen(false);
+
+    toast({
+      title: "Alerta creada",
+      description: `Se ha creado la alerta "${alert.name}" exitosamente`,
+    });
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "No se pudo crear la alerta";
+    toast({
+      title: "Error al crear la alerta",
+      description: message,
+      variant: "destructive",
+    });
+  }
+};
+
 
   const handleDeleteAlert = (id: string) => {
     setAlerts(alerts.filter(alert => alert.id !== id));
